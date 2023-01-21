@@ -1,0 +1,22 @@
+version: "3.2"
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  db:
+    image: 'mariadb:10.3'
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_DATABASE: "mariadb"
+      MYSQL_ROOT_PASSWORD: "root"
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./data:/var/lib/mariadb

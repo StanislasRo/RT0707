@@ -1,0 +1,4 @@
+Flask
+mariadb
+Flask-SQLAlchemy
+PyMySQL
