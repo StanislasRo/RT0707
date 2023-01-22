@@ -10,7 +10,7 @@ class Package(db.Model):
     __tablename__ = 'package'
     id = db.Column(db.Integer, primary_key=True)    
     destination = db.Column(db.String(length=100))
-    statut = db.Column(db.String(length=100))  
+    status = db.Column(db.String(length=100))  
 
 class Warehouse(db.Model):
     __tablename__ = 'warehouse'
@@ -23,7 +23,7 @@ class SessionPrimary(db.Model):
     package = db.Column(db.Integer, db.ForeignKey('package.id'))
     tracker = db.Column(db.Integer, db.ForeignKey('tracker.id'))
     warehouse = db.Column(db.Integer, db.ForeignKey('warehouse.id'))
-    statut = db.Column(db.String(length=100))  
+    status = db.Column(db.String(length=100))  
     time = db.Column(db.Time(timezone=True))
 
 class SessionSecondary(db.Model):
