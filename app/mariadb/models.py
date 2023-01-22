@@ -1,5 +1,6 @@
-from app.app import db
-from sqlalchemy.ext.declarative import relationship
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 class Tracker(db.Model):
     __tablename__ = 'tracker'
@@ -9,7 +10,7 @@ class Package(db.Model):
     __tablename__ = 'package'
     id = db.Column(db.Integer, primary_key=True)    
     destination = db.Column(db.String(length=100))
-    statut = db.Column(db.String, primary_key=True)  
+    statut = db.Column(db.String(length=100))  
 
 class Warehouse(db.Model):
     __tablename__ = 'warehouse'
@@ -22,7 +23,7 @@ class SessionPrimary(db.Model):
     package = db.Column(db.Integer, db.ForeignKey('package.id'))
     tracker = db.Column(db.Integer, db.ForeignKey('tracker.id'))
     warehouse = db.Column(db.Integer, db.ForeignKey('warehouse.id'))
-    statut = db.Column(db.String, primary_key=True)  
+    statut = db.Column(db.String(length=100))  
     time = db.Column(db.Time(timezone=True))
 
 class SessionSecondary(db.Model):
