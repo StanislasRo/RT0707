@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template
 from flask_sqlalchemy import SQLAlchemy
+from app.db.model import *
 
 app = Flask(__name__,
             static_url_path='', 
