@@ -10,7 +10,8 @@ class Package(db.Model):
     __tablename__ = 'package'
     id = db.Column(db.Integer, primary_key=True)    
     destination = db.Column(db.String(length=100))
-    status = db.Column(db.String(length=100))  
+    status = db.Column(db.String(length=100), default='new')
+    tracking_number = db.Column(db.Integer)
 
 class Warehouse(db.Model):
     __tablename__ = 'warehouse'
