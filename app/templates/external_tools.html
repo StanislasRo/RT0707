@@ -1,90 +1,15 @@
-selectionner un colis dans une liste déroulante
-récupère son statut et propose une liste d'actions en rapport avec le statut + réinitialisation du statut (avec supp du statut colis + des sessions associées)
+<!-- 
+    Get package status ==> ajax /api/v1/package to retrieve status + list of warehouses
 
-actions : chgmt entrepot, enregistré app du livreur
+    If new or primary_session =>
+        Change warehouse:
+            AJAX request to get warehouses list
+            Submit ==> POST /api/v1/change_warehouse
+            Alert ==> ok or not
 
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Package tracking</title>
-    </head>
-    <body>
-        <form method="post">
-            <label for="list">Enter your tracking number:</label>
-            <select tracking_number="list">
-                <?php
-                $options = $conn->query("SELECT * FROM db.Package");
-                while ($row = $options->fetch_assoc()) {
-                echo '<option value="' . $row['id'] . '">' . $row['name'] . '</option>';
-            }
-            ?>
-            </select>
-            <input type="submit" value="Submit">
-        </form>
-
-        <form id="search-form">
-            <label for="search-input">Enter Tracking Number:</label>
-            <input type="text" id="search-input" name="search-input">
-            <input type="button" value="Search" onclick="submitForm()">
-        </form>
-        
-        <div id="search-results"></div>
-        
-        <script>
-            function submitForm() {
-                //get the search input
-                var search = document.getElementById("search-input").value;
-        
-                //create an XMLHttpRequest object
-                var xhr = new XMLHttpRequest();
-        
-                //set the callback function for when the request is complete
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            //update the search results div with the response
-                            document.getElementById("search-results").innerHTML = xhr.responseText;
-                        } else {
-                            alert("An error occurred while trying to search the database.");
-                        }
-                    }
-                };
-        
-                //open the request
-                xhr.open("POST", "search.php", true);
-                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        
-                //send the request
-                xhr.send("search-input=" + search);
-            }
-        </script>
-        
-
-        <?php
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $selected = $_POST['list'];
-            $result = $conn->query("SELECT id FROM db.Package WHERE tracking_number = $selected");
-            $variable = $result->fetch_assoc();
+    If primary_session =>
+        Smartphone:
+            livreur qui récupère
             
-            if ($variable = "new"){
-                echo "Waiting for your package to be taken over";
-            }
-
-            if ($variable = "in transit"){
-                $idwarehouse = $conn->query("SELECT fk_warehouse FROM db.SessionPrimary WHERE fk_colis = $variable");
-                $queuename = $conn->query("SELECT queue_name FROM db.Warehouse WHERE id = $identrepot");
-                echo "Your package is in" $queuename;
-            }
-
-            if ($variable = "in delivering"){
-                $iddeliveryman = $conn->query("SELECT fk_delivery_man FROM db.SessionSecondary WHERE fk_colis = $variable");
-                $deliveryman = $conn->query("SELECT fk_smartphone FROM db.DeliveryMan WHERE id = $iddeliveryman");
-                $position = $conn->query("SELECT latitude, longitude FROM db.Smartphone WHERE id = $deliveryman");
-                echo "Your package is in" $position;                
-            }
-
-            if ($variable = "delivered"){
-                echo "Your packet is already delivered.";
-            }
-        }
-        ?>
+    
+    !>

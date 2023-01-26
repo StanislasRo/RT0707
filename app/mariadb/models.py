@@ -16,7 +16,7 @@ class Package(db.Model):
 class Warehouse(db.Model):
     __tablename__ = 'warehouse'
     id = db.Column(db.Integer, primary_key=True)    
-    queue_name = db.Column(db.String(length=100))
+    name = db.Column(db.String(length=100))
 
 class SessionPrimary(db.Model):
     __tablename__ = 'session_primary'
