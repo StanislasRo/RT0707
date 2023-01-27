@@ -3,7 +3,8 @@ from flask import render_template, abort
 from flask_apscheduler import APScheduler
 from mariadb.models import db
 import paho.mqtt.client as mqtt
-from publishers.mqtt_pub import amqp_change_warehouse
+from publishers.mqtt_pub import mqtt_change_warehouse
+from publishers.amqp_pub import publish
 
 
 app = Flask(__name__,
@@ -73,9 +74,14 @@ def quit_warehouse():
     # return if the change request has been successfuly made in json
 
 
+# @app.route("/test")
+# def test():
+#     mqtt_change_warehouse("WAREFIRST", "test message")
+#     return "Done"
+
 @app.route("/test")
 def test():
-    amqp_change_warehouse("WAREFIRST", "test message")
+    publish("WAREFIRST", {"test message":"test vak"})
     return "Done"
 
 

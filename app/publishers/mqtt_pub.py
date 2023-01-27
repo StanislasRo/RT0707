@@ -7,7 +7,7 @@ def on_publish(client, userdata, result):
 def on_message(client, obj, msg):
     print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 
-def amqp_change_warehouse(warehouse_name, tracking_number):
+def mqtt_change_warehouse(warehouse_name, tracking_number):
     client = mqtt.Client()
     client.username_pw_set("guest", "guest")
     client.on_publish = on_publish
