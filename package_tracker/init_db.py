@@ -1,19 +1,29 @@
-from models import *
-db = SQLAlchemy()
+# from mariadb.models import Tracker, Package, Warehouse, SessionPrimary, SessionSecondary, DeliveryMan, Smartphone, db
+# from app import db
+from mariadb.models import *
 
-def add_tracker():
+# def add_tracker():
+#     db.session.commit()
+
+def clean_mariadb():
+    print("clean db")
+    db.session.query(Package).delete()
+    db.session.query(Warehouse).delete()
     db.session.commit()
+
     
 def add_package():
+    print("add packages")
     db.session.add(Package(destination='Nantes', status='new', tracking_number='10000'))
     db.session.add(Package(destination='Rennes', status='in delivering', tracking_number='10001'))
     db.session.add(Package(destination='Reims', status='delivered', tracking_number='10002'))
     db.session.commit()
 
 def add_warehouse():
-    db.session.add(Warehouse(queue_name='warehouse one'))
-    db.session.add(Warehouse(queue_name='warehouse two'))
-    db.session.add(Warehouse(queue_name='warehouse three'))
+    print("add warehouses")
+    db.session.add(Warehouse(name='warehouse one'))
+    db.session.add(Warehouse(name='warehouse two'))
+    db.session.add(Warehouse(name='warehouse three'))
     db.session.commit()
 
 def add_sessionprimary():

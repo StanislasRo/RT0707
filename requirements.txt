@@ -5,3 +5,4 @@ PyMySQL
 flask_apscheduler
 paho-mqtt
 pika
+requests

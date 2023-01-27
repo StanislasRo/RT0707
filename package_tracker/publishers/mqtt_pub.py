@@ -13,5 +13,8 @@ def mqtt_change_warehouse(warehouse_name, tracking_number):
     client.on_publish = on_publish
     client.on_message = on_message
     client.connect("127.0.0.1", 1883)
-    res = client.publish(warehouse_name, tracking_number)
+    res = client.publish(warehouse_name, tracking_number, 0)
     client.disconnect()
+    if res[0] == 0:
+        return "Successfully sent"
+    return "Failed"
