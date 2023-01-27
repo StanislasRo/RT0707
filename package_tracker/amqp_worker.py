@@ -9,6 +9,7 @@ channel.queue_declare(queue='main')
 
 
 def callback(ch, method, properties, body):
+    # TODO when receive message from AMQP queue
     print('Received in main')
     print(body)
 

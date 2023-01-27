@@ -61,14 +61,14 @@ def get_warehouses():
 def change_warehouse():
     tracking_number = request.args.get('tracking_number', None)
     new_warehouse = request.args.get('warehouse', None) 
-    # If exists, update former primary session to indicated that the package left it
+    # If primary sessions exists with this tracking number, update former primary session to indicated that the package left it
     # create new row in primary session table with the new info (warehouse name and tracking number)
     return result
 
 
 
-@app.route("/api/v1/tool/change_warehouse", methods=['POST'])
-def tool_change_warehouse():
+@app.route("/api/v1/simulate/change_warehouse", methods=['POST'])
+def simulate_change_warehouse():
     tracking_number = request.args.get('tracking_number', None)
     new_warehouse = request.args.get('warehouse', None) 
     if not tracking_number or not new_warehouse:
@@ -77,19 +77,20 @@ def tool_change_warehouse():
     return result
 
 
-@app.route("/api/v1/tool/start_delivery", methods=['POST'])
-def tool_start_delivery():
+@app.route("/api/v1/simulate/start_delivery", methods=['POST'])
+def simulate_start_delivery():
     tracking_number = request.args.get('tracking_number', None)
     if not tracking_number:
         abort(404)
     # Get list of deliveryman ids and select one randomly
     data_to_send = {
+        "tracking_number": tracking_number,
         "latitude": round(random.uniform(-90, 90), 6),
         "longitude": round(random.uniform(-180, 180), 6),
         # To complete with the choosen deliveryman id
     }
-    amqp_publish("geoloc", data_to_send)
-    # Quit warehouse => PUBLISHER MQTT to ask to close last primary_session & to deattach tracker and package
+    amqp_publish("main", data_to_send)
+    return "OK"
     # return if the change request has been successfuly made in json
 
 
