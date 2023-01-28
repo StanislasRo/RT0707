@@ -43,13 +43,14 @@ def get_package():
             return {
                 "status": "in transit",
                 "message": "The package is transiting in: ",
-                "additional_data": ""
+                "additional_data": primary_session_info
             }
         elif package.status == "out for delivery":
+            secondary_session_info = get_secondary_session_info(package.id)
             return {
                 "status": "out for delivery",
                 "message": f"The delivery man is currently at Latitude: {lat}, Longitude: {lon}",
-                "additional_data": ""
+                "additional_data": secondary_session_info
             }
         elif package.status == "delivered":
             return {
