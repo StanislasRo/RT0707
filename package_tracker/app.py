@@ -6,6 +6,7 @@ from publishers.mqtt_pub import mqtt_change_warehouse
 from publishers.amqp_pub import amqp_publish
 from init_db import clean_mariadb, add_package, add_warehouse
 import random
+import datetime.datetime
 
 app = Flask(__name__,
             static_url_path='', 
@@ -63,19 +64,7 @@ def get_package():
             "message": "",
             "additional_data": ""
         }
-    # Search package status
-    # Based on status, trigger action
-    # new => return info message
-    # primary_session => get_primary_session_info
-    # secondary_session => get_secondary_session_info
-    # delivered
-    """
-        {
-            "status": "",
-            "message": ""
-            "additional_data": ...
-        }
-    """
+
 
 @app.route("/api/v1/warehouses", methods=['GET'])
 def get_warehouses():
@@ -90,10 +79,28 @@ def get_warehouses():
 @app.route("/api/v1/change_warehouse", methods=['POST'])
 def change_warehouse():
     tracking_number = request.args.get('tracking_number', None)
-    new_warehouse = request.args.get('warehouse', None) 
-    # If primary sessions exists with this tracking number, update former primary session to indicated that the package left it
-    # create new row in primary session table with the new info (warehouse name and tracking number)
-    return result
+    new_warehouse = request.args.get('warehouse', None)
+    if not tracking_number or not new_warehouse:
+        abort(404)
+    ps = db.session.query(SessionPrimary).filter(SessionPrimary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
+    if ps:
+        ps.status = "archived"
+        tracker = ps.tracker
+        db.session.commit()
+    else:
+        tracker = db.session.query(Tracker).filter(Tracker.status=="free").first()
+        if not tracker:
+            print("no free tracker")
+            abort(404)
+    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
+    warehouse = db.session.query(Warehouse).filter(Warehouse.name==new_warehouse).first()
+    db.session.add(SessionPrimary(package=package, tracker=tracker, warehouse=warehouse, status='in progress', date=datetime.now()))
+    db.session.commit()
+    return {
+        "package": package.tracking_number,
+        "warehouse": warehouse.name,
+        "tracker": tracker.id
+    }
 
 
 

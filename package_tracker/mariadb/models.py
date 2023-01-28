@@ -5,6 +5,7 @@ db = SQLAlchemy()
 class Tracker(db.Model):
     __tablename__ = 'tracker'
     id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(db.String(length=100), default='free') # free / busy
 
 class Package(db.Model):
     __tablename__ = 'package'
