@@ -24,15 +24,16 @@ class SessionPrimary(db.Model):
     package = db.Column(db.Integer, db.ForeignKey('package.id'))
     tracker = db.Column(db.Integer, db.ForeignKey('tracker.id'))
     warehouse = db.Column(db.Integer, db.ForeignKey('warehouse.id'))
-    status = db.Column(db.String(length=100))  
-    time = db.Column(db.Time(timezone=True))
+    status = db.Column(db.String(length=100)) # in progress / archived
+    date = db.Column(db.DateTime(timezone=True)) 
 
 class SessionSecondary(db.Model):
     __tablename__ = 'session_secondary'
     id = db.Column(db.Integer, primary_key=True)    
     package = db.Column(db.Integer, db.ForeignKey('package.id'))
     delivery_man = db.Column(db.Integer, db.ForeignKey('delivery_man.id'))
-    time = db.Column(db.Time(timezone=True))
+    status = db.Column(db.String(length=100)) # in progress / archived
+    date = db.Column(db.DateTime(timezone=True))
 
 class DeliveryMan(db.Model):
     __tablename__ = 'delivery_man'

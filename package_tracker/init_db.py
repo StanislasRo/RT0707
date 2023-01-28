@@ -26,18 +26,6 @@ def add_warehouse():
     db.session.add(Warehouse(name='warehouse three'))
     db.session.commit()
 
-def add_sessionprimary():
-    db.session.add(SessionPrimary(package='1', tracker='1', warehouse='1', status='new', time='17:00'))
-    db.session.add(SessionPrimary(package='2', tracker='2', warehouse='2', status='in the warehouse', time='17:30'))
-    db.session.add(SessionPrimary(package='3', tracker='3', warehouse='3', status='out of the warehouse', time='18:00'))
-    db.session.commit()
-
-def add_sessionsecondary():
-    db.session.add(SessionSecondary(package='1', delivery_man='1', time='17:00'))
-    db.session.add(SessionSecondary(package='2', delivery_man='2', time='17:30'))
-    db.session.add(SessionSecondary(package='3', delivery_man='3', time='18:00'))
-    db.session.commit()
-
 def add_delivery_man():
     db.session.add(DeliveryMan(smartphone='1'))
     db.session.add(DeliveryMan(smartphone='2'))

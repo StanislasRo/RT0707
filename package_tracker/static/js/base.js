@@ -3,12 +3,10 @@ $(function() {
 
     $( "#form-tracking" ).submit(function( event ) {
         event.preventDefault();
+        console.log($("#tracking-number").val());
         $.ajax({
             type: "GET", 	        //Méthode à employer POST ou GET 
-            url: "/api/v1/????",  //Cible du script coté serveur à appeler 
-            beforeSend: function () {
-              //Code à appeler avant l'appel ajax en lui même
-            }
+            url: "/api/v1/package?tracking-number="+$("#tracking-number").val(),  //Cible du script coté serveur à appeler
         }).done(function (output) {
         //Code à jouer en cas d'éxécution sans erreur du script du PHP
         }).fail(function (error) {

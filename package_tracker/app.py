@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import render_template, abort
+from flask import render_template, abort, request
 from flask_apscheduler import APScheduler
 from mariadb.models import db
 from publishers.mqtt_pub import mqtt_change_warehouse
@@ -22,17 +22,46 @@ from mariadb.models import Tracker, Package, Warehouse, SessionPrimary, SessionS
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("tracking.html")
 
-@app.route("/track_package")
-def track_package():
-    return render_template("track_package.html")
 
 @app.route("/api/v1/package", methods=['GET'])
 def get_package():
-    tracking_number = request.args.get('tracking_number', None)
+    tracking_number = request.args.get('tracking-number', None)
     if not tracking_number:
         abort(404)
+    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
+    if package:
+        if package.status == "new":
+            return {
+                "status": "new",
+                "message": "The package has not yet been picked up",
+                "additional_data": ""
+            }
+        elif package.status == "in transit":
+            primary_session_info = get_primary_session_info(package.id)
+            return {
+                "status": "in transit",
+                "message": "The package is transiting in: ",
+                "additional_data": ""
+            }
+        elif package.status == "out for delivery":
+            return {
+                "status": "out for delivery",
+                "message": f"The delivery man is currently at Latitude: {lat}, Longitude: {lon}",
+                "additional_data": ""
+            }
+        elif package.status == "delivered":
+            return {
+                "status": "delivered",
+                "message": f"The packet has already been delivered.",
+                "additional_data": ""
+            }
+    return {
+            "status": "Package not found",
+            "message": "",
+            "additional_data": ""
+        }
     # Search package status
     # Based on status, trigger action
     # new => return info message
@@ -116,6 +145,37 @@ def populate_db():
 def clean_db():
     clean_mariadb()
     return "OK"
+
+
+
+def get_primary_session_info(fk_package):
+    # List warehouse + status + time
+    info_about_package = []
+    list_of_ps = db.session.query(SessionPrimary).filter(SessionPrimary.package==fk_package).order_by(SessionPrimary.date)
+    for ps in list_of_ps:
+        info_about_package.append({
+            "warehouse": ps.warehouse,
+            "status": ps.status,
+            "date": ps.date
+        })
+    return info_about_package
+
+
+
+def get_secondary_session_info(fk_package):
+    # List warehouse + status + time
+    info_about_package = []
+    list_of_ss = db.session.query(SessionSecondary).filter(SessionSecondary.package==fk_package).order_by(SessionSecondary.date)
+    for ss in list_of_ss:
+        delivery_man = db.session.query(DeliveryMan).filter(DeliveryMan.id==ss.delivery_man)
+        smartphone_geoloc = db.session.query(Smartphone).filter(Smartphone.id==delivery_man.smartphone)
+        info_about_package.append({
+            "lat": smartphone_geoloc.latitude,
+            "lon": smartphone_geoloc.longitude,
+            "status": ps.status,
+            "date": ps.date
+        })
+    return info_about_package
 
 
 
