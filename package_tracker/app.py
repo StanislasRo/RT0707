@@ -21,6 +21,16 @@ scheduler.start()
 
 from mariadb.models import Tracker, Package, Warehouse, SessionPrimary, SessionSecondary, DeliveryMan, Smartphone
 
+
+def interval_task(smartphone_id):
+    data_to_send = {
+        "latitude": round(random.uniform(-90, 90), 6),
+        "longitude": round(random.uniform(-180, 180), 6),
+        "smartphone_id": smartphone_id
+    }
+    amqp_publish("main", data_to_send)
+
+
 @app.route("/")
 def home():
     return render_template("tracking.html")
@@ -82,6 +92,7 @@ def change_warehouse():
     new_warehouse = request.args.get('warehouse', None)
     if not tracking_number or not new_warehouse:
         abort(404)
+    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
     ps = db.session.query(SessionPrimary).filter(SessionPrimary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
     if ps:
         ps.status = "archived"
@@ -92,7 +103,8 @@ def change_warehouse():
         if not tracker:
             print("no free tracker")
             abort(404)
-    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
+        tracker.status = "busy"
+        package.status = "in transit"
     warehouse = db.session.query(Warehouse).filter(Warehouse.name==new_warehouse).first()
     db.session.add(SessionPrimary(package=package, tracker=tracker, warehouse=warehouse, status='in progress', date=datetime.now()))
     db.session.commit()
@@ -100,6 +112,73 @@ def change_warehouse():
         "package": package.tracking_number,
         "warehouse": warehouse.name,
         "tracker": tracker.id
+    }
+
+
+@app.route("/api/v1/start_delivery", methods=['POST'])
+def start_delivery():
+    tracking_number = request.args.get('tracking_number', None)
+    if not tracking_number:
+        abort(404)
+
+    list_of_dlvm = db.session.query(DeliveryMan).all()
+    nb_of_dlvm = len(list_of_dlvm)
+    choosen_dlvm = random.randrange(nb_of_dlvm)
+    dlvm = list_of_dlvm[choosen_dlvm]
+
+    latitude = round(random.uniform(-90, 90), 6)
+    longitute = round(random.uniform(-180, 180), 6)
+
+    ps = db.session.query(SessionPrimary).filter(SessionPrimary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
+    ps.status = "archived"
+    tracker = ps.tracker
+    tracker.status = "free"
+    db.session.commit()
+
+    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
+    package.status = "out for delivery"
+    db.session.add(SessionSecondary(package=package, delivery_man=dlvm.id, status='in progress', date=datetime.now()))
+    db.session.commit()
+    smartphone = dlvm.smartphone
+    scheduler.add_job(id=f'id-{tracker.tracking_number}', func=lambda: interval_task(smartphone.id), trigger='interval', seconds=60)
+    return {
+        "package": package.tracking_number,
+        "delivery_man": delivery_man.id
+    }
+
+
+@app.route("/api/v1/stop_delivery", methods=['POST'])
+def stop_delivery():
+    tracking_number = request.args.get('tracking_number', None)
+    if not tracking_number:
+        abort(404)
+
+    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
+    package.status = "delivered"
+    ss = db.session.query(SessionSecondary).filter(SessionSecondary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
+    ss.status = "archived"
+    db.session.commit()
+    scheduler.resume_job(id=f'id-{tracker.tracking_number}')
+
+    return "OK"
+
+
+@app.route("/api/v1/update_geoloc", methods=['POST'])
+def update_geoloc():
+    latitude = request.args.get('latitude', None)
+    longitude = request.args.get('longitude', None)
+    smartphone_id = request.args.get('smartphone_id', None)
+    if not latitude or not longitude or not smartphone_id:
+        abort(404)
+
+    smartphone = db.session.query(Smartphone).filter(Smartphone.id==smartphone_id).first()
+    smartphone.latitude = latitude
+    smartphone.longitude = longitude
+    db.session.commit()
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "smartphone_id": smartphone_id,
     }
 
 
@@ -112,23 +191,6 @@ def simulate_change_warehouse():
         abort(404)
     result = mqtt_change_warehouse(new_warehouse, tracking_number)
     return result
-
-
-@app.route("/api/v1/simulate/start_delivery", methods=['POST'])
-def simulate_start_delivery():
-    tracking_number = request.args.get('tracking_number', None)
-    if not tracking_number:
-        abort(404)
-    # Get list of deliveryman ids and select one randomly
-    data_to_send = {
-        "tracking_number": tracking_number,
-        "latitude": round(random.uniform(-90, 90), 6),
-        "longitude": round(random.uniform(-180, 180), 6),
-        # To complete with the choosen deliveryman id
-    }
-    amqp_publish("main", data_to_send)
-    return "OK"
-    # return if the change request has been successfuly made in json
 
 
 @app.route("/test")

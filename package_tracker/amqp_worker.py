@@ -1,4 +1,5 @@
 import pika, json
+import requests
 
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -9,9 +10,11 @@ channel.queue_declare(queue='main')
 
 
 def callback(ch, method, properties, body):
-    # TODO when receive message from AMQP queue
     print('Received in main')
     print(body)
+    res = requests.post('http://127.0.0.1:5000/api/v1/update_geoloc', params=body)
+    print(res)
+
 
 
 channel.basic_consume(queue='main', on_message_callback=callback, auto_ack=True)
