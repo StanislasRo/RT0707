@@ -112,6 +112,7 @@ def change_warehouse():
         tracker = db.session.query(Tracker).filter(Tracker.id==ps.tracker).first()
         ps.status = "archived"
         db.session.commit()
+        print("free tracker found")
     else:
         tracker = db.session.query(Tracker).filter(Tracker.status=="free").first()
         if not tracker:
@@ -121,6 +122,7 @@ def change_warehouse():
         package.status = "in transit"
     warehouse = db.session.query(Warehouse).filter(Warehouse.name==new_warehouse).first()
     db.session.commit()
+    print(warehouse.name)
     db.session.add(SessionPrimary(package=package.id, tracker=tracker.id, warehouse=warehouse.id, status='in progress', date=datetime.now()))
     db.session.commit()
     return {

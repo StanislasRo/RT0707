@@ -12,27 +12,27 @@ class Package(db.Model):
     id = db.Column(db.Integer, primary_key=True)    
     destination = db.Column(db.String(length=100))
     status = db.Column(db.String(length=100), default='new')
-    tracking_number = db.Column(db.Integer)
+    tracking_number = db.Column(db.Integer, unique=True)
 
 class Warehouse(db.Model):
     __tablename__ = 'warehouse'
     id = db.Column(db.Integer, primary_key=True)    
-    name = db.Column(db.String(length=100))
+    name = db.Column(db.String(length=100), unique=True)
 
 class SessionPrimary(db.Model):
     __tablename__ = 'session_primary'
     id = db.Column(db.Integer, primary_key=True)    
-    package = db.Column(db.Integer, db.ForeignKey('package.id'), unique=True, nullable=True)
-    tracker = db.Column(db.Integer, db.ForeignKey('tracker.id'), unique=True, nullable=True)
-    warehouse = db.Column(db.Integer, db.ForeignKey('warehouse.id'), unique=True, nullable=True)
+    package = db.Column(db.Integer, db.ForeignKey('package.id'), unique=False, nullable=True)
+    tracker = db.Column(db.Integer, db.ForeignKey('tracker.id'), unique=False, nullable=True)
+    warehouse = db.Column(db.Integer, db.ForeignKey('warehouse.id'), unique=False, nullable=True)
     status = db.Column(db.String(length=100)) # in progress / archived
     date = db.Column(db.DateTime(timezone=True)) 
 
 class SessionSecondary(db.Model):
     __tablename__ = 'session_secondary'
     id = db.Column(db.Integer, primary_key=True)    
-    package = db.Column(db.Integer, db.ForeignKey('package.id'), unique=True, nullable=True)
-    delivery_man = db.Column(db.Integer, db.ForeignKey('delivery_man.id'), unique=True, nullable=True)
+    package = db.Column(db.Integer, db.ForeignKey('package.id'), unique=False, nullable=True)
+    delivery_man = db.Column(db.Integer, db.ForeignKey('delivery_man.id'), unique=False, nullable=True)
     status = db.Column(db.String(length=100)) # in progress / archived
     date = db.Column(db.DateTime(timezone=True))
 
