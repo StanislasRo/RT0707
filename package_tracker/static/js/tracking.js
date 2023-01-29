@@ -10,10 +10,11 @@ $(function() {
         }).done(function (output) {
             //Code à jouer en cas d'éxécution sans erreur du script du PHP
             // Retrieve the package data from the database
-            var package_data = Package.query.filter_by(tracking_number=output).first()
+            //var package_data = Package.query.filter_by(tracking_number=output).first()
             // Display the package status and time on the page
-            $('#package_status').text(package_data.status)
-            $('#package_time').text(package_data.time)
+            //$('#package_status').text(package_data.status)
+            //$('#package_time').text(package_data.time)
+            $("#result-tracking").text(JSON.stringify(output));
         }).fail(function (error) {
             //Code à jouer en cas d'éxécution en erreur du script du PHP ou de ressource introuvable
             var errorMessage = "Error: " + error;
