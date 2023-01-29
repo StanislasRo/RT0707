@@ -4,9 +4,9 @@ from flask_apscheduler import APScheduler
 from mariadb.models import db
 from publishers.mqtt_pub import mqtt_change_warehouse
 from publishers.amqp_pub import amqp_publish
-from init_db import clean_mariadb, add_package, add_warehouse
+from init_db import clean_mariadb, add_db
 import random
-import datetime.datetime
+from datetime import datetime
 
 app = Flask(__name__,
             static_url_path='', 
@@ -32,8 +32,23 @@ def interval_task(smartphone_id):
 
 
 @app.route("/")
-def home():
+def home_gui():
     return render_template("tracking.html")
+
+
+@app.route("/start_delivery")
+def start_delivery_gui():
+    return render_template("start_delivery.html")
+
+
+@app.route("/stop_delivery")
+def stop_delivery_gui():
+    return render_template("stop_delivery.html")
+
+
+@app.route("/change_warehouse")
+def change_warehouse_gui():
+    return render_template("change_warehouse.html")
 
 
 @app.route("/api/v1/package", methods=['GET'])
@@ -83,7 +98,6 @@ def get_warehouses():
     for warehouse in warehouses:
         warehouses_list.append(warehouse.name)
     return warehouses_list
-
 
 
 @app.route("/api/v1/change_warehouse", methods=['POST'])
@@ -182,7 +196,6 @@ def update_geoloc():
     }
 
 
-
 @app.route("/api/v1/simulate/change_warehouse", methods=['POST'])
 def simulate_change_warehouse():
     tracking_number = request.args.get('tracking_number', None)
@@ -206,8 +219,7 @@ def test():
 
 @app.route("/api/v1/populate_db", methods=['GET'])
 def populate_db():
-    add_package()
-    add_warehouse()
+    add_db()
     return "OK"
 
 
