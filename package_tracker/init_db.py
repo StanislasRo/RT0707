@@ -7,13 +7,16 @@ from mariadb.models import *
 
 def clean_mariadb():
     print("clean db")
+    db.session.query(SessionPrimary).delete()
+    db.session.commit()
+    db.session.query(SessionSecondary).delete()
+    db.session.commit()
     db.session.query(Package).delete()
     db.session.query(Tracker).delete()
     db.session.query(Warehouse).delete()
     db.session.query(DeliveryMan).delete()
+    db.session.commit()
     db.session.query(Smartphone).delete()
-    db.session.query(SessionPrimary).delete()
-    db.session.query(SessionSecondary).delete()
     db.session.commit()
 
 def add_db():

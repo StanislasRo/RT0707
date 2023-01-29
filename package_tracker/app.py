@@ -68,14 +68,14 @@ def get_package():
             primary_session_info = get_primary_session_info(package.id)
             return {
                 "status": "in transit",
-                "message": "The package is transiting in: ",
+                "message": f"The package is transiting",
                 "additional_data": primary_session_info
             }
         elif package.status == "out for delivery":
             secondary_session_info = get_secondary_session_info(package.id)
             return {
                 "status": "out for delivery",
-                "message": f"The delivery man is currently at Latitude: {lat}, Longitude: {lon}",
+                "message": f"The delivery man is currently at Latitude: {secondary_session_info['lat']}, Longitude: {secondary_session_info['lon']}",
                 "additional_data": secondary_session_info
             }
         elif package.status == "delivered":
@@ -107,10 +107,10 @@ def change_warehouse():
     if not tracking_number or not new_warehouse:
         abort(404)
     package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
-    ps = db.session.query(SessionPrimary).filter(SessionPrimary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
+    ps = db.session.query(SessionPrimary).filter(SessionPrimary.package == package.id, SessionPrimary.status == "in progress").first()
     if ps:
+        tracker = db.session.query(Tracker).filter(Tracker.id==ps.tracker).first()
         ps.status = "archived"
-        tracker = ps.tracker
         db.session.commit()
     else:
         tracker = db.session.query(Tracker).filter(Tracker.status=="free").first()
@@ -120,7 +120,8 @@ def change_warehouse():
         tracker.status = "busy"
         package.status = "in transit"
     warehouse = db.session.query(Warehouse).filter(Warehouse.name==new_warehouse).first()
-    db.session.add(SessionPrimary(package=package, tracker=tracker, warehouse=warehouse, status='in progress', date=datetime.now()))
+    db.session.commit()
+    db.session.add(SessionPrimary(package=package.id, tracker=tracker.id, warehouse=warehouse.id, status='in progress', date=datetime.now()))
     db.session.commit()
     return {
         "package": package.tracking_number,
@@ -143,7 +144,7 @@ def start_delivery():
     latitude = round(random.uniform(-90, 90), 6)
     longitute = round(random.uniform(-180, 180), 6)
 
-    ps = db.session.query(SessionPrimary).filter(SessionPrimary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
+    ps = db.session.query(SessionPrimary).filter(SessionPrimary.package==package, SessionPrimary.status == "in progress").first()
     ps.status = "archived"
     tracker = ps.tracker
     tracker.status = "free"
@@ -169,7 +170,7 @@ def stop_delivery():
 
     package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
     package.status = "delivered"
-    ss = db.session.query(SessionSecondary).filter(SessionSecondary.tracking_number==tracking_number, SessionPrimary.status == "in progress").first()
+    ss = db.session.query(SessionSecondary).filter(SessionSecondary.package==package, SessionPrimary.status == "in progress").first()
     ss.status = "archived"
     db.session.commit()
     scheduler.resume_job(id=f'id-{tracker.tracking_number}')
@@ -198,8 +199,10 @@ def update_geoloc():
 
 @app.route("/api/v1/simulate/change_warehouse", methods=['POST'])
 def simulate_change_warehouse():
-    tracking_number = request.args.get('tracking_number', None)
+    tracking_number = request.args.get('tracking-number', None)
     new_warehouse = request.args.get('warehouse', None) 
+    print(tracking_number)
+    print(new_warehouse)
     if not tracking_number or not new_warehouse:
         abort(404)
     result = mqtt_change_warehouse(new_warehouse, tracking_number)
@@ -235,8 +238,9 @@ def get_primary_session_info(fk_package):
     info_about_package = []
     list_of_ps = db.session.query(SessionPrimary).filter(SessionPrimary.package==fk_package).order_by(SessionPrimary.date)
     for ps in list_of_ps:
+        warehouse = db.session.query(Warehouse).filter(Warehouse.id==ps.warehouse).first()
         info_about_package.append({
-            "warehouse": ps.warehouse,
+            "warehouse": warehouse.name,
             "status": ps.status,
             "date": ps.date
         })
