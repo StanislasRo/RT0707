@@ -75,7 +75,7 @@ def get_package():
             secondary_session_info = get_secondary_session_info(package.id)
             return {
                 "status": "out for delivery",
-                "message": f"The delivery man is currently at Latitude: {secondary_session_info['lat']}, Longitude: {secondary_session_info['lon']}",
+                "message": f"The delivery man is currently",
                 "additional_data": secondary_session_info
             }
         elif package.status == "delivered":
@@ -132,7 +132,8 @@ def change_warehouse():
 
 @app.route("/api/v1/start_delivery", methods=['POST'])
 def start_delivery():
-    tracking_number = request.args.get('tracking_number', None)
+    tracking_number = request.args.get('tracking-number', None)
+    print(tracking_number)
     if not tracking_number:
         abort(404)
 
@@ -143,37 +144,39 @@ def start_delivery():
 
     latitude = round(random.uniform(-90, 90), 6)
     longitute = round(random.uniform(-180, 180), 6)
+    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
 
-    ps = db.session.query(SessionPrimary).filter(SessionPrimary.package==package, SessionPrimary.status == "in progress").first()
+    ps = db.session.query(SessionPrimary).filter(SessionPrimary.package==package.id, SessionPrimary.status == "in progress").first()
     ps.status = "archived"
-    tracker = ps.tracker
+    tracker = db.session.query(Tracker).filter(Tracker.id==ps.tracker).first()
     tracker.status = "free"
     db.session.commit()
 
-    package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
+    
     package.status = "out for delivery"
-    db.session.add(SessionSecondary(package=package, delivery_man=dlvm.id, status='in progress', date=datetime.now()))
+    db.session.add(SessionSecondary(package=package.id, delivery_man=dlvm.id, status='in progress', date=datetime.now()))
     db.session.commit()
     smartphone = dlvm.smartphone
-    scheduler.add_job(id=f'id-{tracker.tracking_number}', func=lambda: interval_task(smartphone.id), trigger='interval', seconds=60)
+    scheduler.add_job(id=f'id-{package.tracking_number}', func=lambda: interval_task(smartphone), trigger='interval', seconds=15)
     return {
         "package": package.tracking_number,
-        "delivery_man": delivery_man.id
+        "delivery_man": dlvm.id
     }
 
 
 @app.route("/api/v1/stop_delivery", methods=['POST'])
 def stop_delivery():
-    tracking_number = request.args.get('tracking_number', None)
+    tracking_number = request.args.get('tracking-number', None)
+    print(tracking_number)
     if not tracking_number:
         abort(404)
 
     package = db.session.query(Package).filter(Package.tracking_number==tracking_number).first()
     package.status = "delivered"
-    ss = db.session.query(SessionSecondary).filter(SessionSecondary.package==package, SessionPrimary.status == "in progress").first()
+    ss = db.session.query(SessionSecondary).filter(SessionSecondary.package==package.id, SessionSecondary.status == "in progress").first()
     ss.status = "archived"
     db.session.commit()
-    scheduler.resume_job(id=f'id-{tracker.tracking_number}')
+    scheduler.resume_job(id=f'id-{package.tracking_number}')
 
     return "OK"
 
@@ -253,13 +256,13 @@ def get_secondary_session_info(fk_package):
     info_about_package = []
     list_of_ss = db.session.query(SessionSecondary).filter(SessionSecondary.package==fk_package).order_by(SessionSecondary.date)
     for ss in list_of_ss:
-        delivery_man = db.session.query(DeliveryMan).filter(DeliveryMan.id==ss.delivery_man)
-        smartphone_geoloc = db.session.query(Smartphone).filter(Smartphone.id==delivery_man.smartphone)
+        delivery_man = db.session.query(DeliveryMan).filter(DeliveryMan.id==ss.delivery_man).first()
+        smartphone_geoloc = db.session.query(Smartphone).filter(Smartphone.id==delivery_man.smartphone).first()
         info_about_package.append({
             "lat": smartphone_geoloc.latitude,
             "lon": smartphone_geoloc.longitude,
-            "status": ps.status,
-            "date": ps.date
+            "status": ss.status,
+            "date": ss.date
         })
     return info_about_package
 

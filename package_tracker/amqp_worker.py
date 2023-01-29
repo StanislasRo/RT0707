@@ -11,8 +11,11 @@ channel.queue_declare(queue='main')
 
 def callback(ch, method, properties, body):
     print('Received in main')
-    print(body)
-    res = requests.post('http://127.0.0.1:5000/api/v1/update_geoloc', params=body)
+    test = body.decode("utf-8")
+    print(test)
+    print(type(body))
+    print(type(test))
+    res = requests.post('http://127.0.0.1:5000/api/v1/update_geoloc', params=json.loads(test))
     print(res)
 
 
